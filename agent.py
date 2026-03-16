@@ -1,9 +1,35 @@
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
+
+FILE_NAME = "chat_memory.json"
+
+def load_data():
+    if os.path.exists(FILE_NAME):
+        if os.path.getsize(FILE_NAME) > 0:
+            with open(FILE_NAME, "r") as f:
+                return json.load(f)
+        return []
+
+def save_data(chat_history):
+    new_memory = []
+    for message in chat_history:
+        message_text = message.parts[0].text
+        new_memory.append({
+            "role": message.role,
+            "parts": [{
+                "text": message_text
+            }]
+        })
+
+        with open(FILE_NAME, "w") as f:
+            json.dump(new_memory, f, indent=4)
+
+
 genai.configure(api_key=api_key)
 
 instructions = """Role & Goal: You are the Career Architect AI, a world-class professional development strategist. Your mission is to help users design, build, and renovate their professional lives.
@@ -28,13 +54,17 @@ Whitespace: Use horizontal rules (---) and bold headers to keep the layout clean
 
 model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite", system_instruction=instructions)
 
-print("------- Agent is ready. (Type 'exit' or 'bye' to quit.) -------")
+memory = load_data()
+chat = model.start_chat(history=memory)
+
+print("------- Your Personal Career Architect is Online! (Type 'exit' or 'bye' to quit.) -------")
 
 while True:
     user_input = input("User: ")
     if user_input in ["exit", "bye", "quit"]:
-        print("Agent: Goodbye!")
+        save_data(chat.history)
+        print("Progress Saved. Goodbye!")
         break
 
-    response = model.generate_content(user_input)
+    response = chat.send_message(user_input)
     print("Agent:", response.text)
