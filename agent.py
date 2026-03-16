@@ -102,7 +102,6 @@ with st.sidebar:
             os.remove(FILE_NAME)
         st.rerun()
 
-    st.info("Your progress is automatically saved to `chat_memory.json` when you interact.")
 
 # --- MAIN CHAT UI ---
 st.title("🏗️ Career Architect AI")
